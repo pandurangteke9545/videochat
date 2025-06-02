@@ -5,15 +5,25 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+
 const server = http.createServer(app);
 
+// ✅ Properly initialize socket.io with CORS
 const io = new Server(server, {
   cors: {
     origin: '*',
-    methods: ['GET', 'POST']
-  }
+    methods: ['GET', 'POST'],
+  },
 });
 
+// ✅ Ping endpoint to confirm backend connectivity
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
+
+// ✅ Video chat logic
 let waitingUser = null;
 
 io.on('connection', (socket) => {
@@ -47,6 +57,9 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
+// ✅ Listen on 0.0.0.0 for LAN access
+const PORT = 5000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
