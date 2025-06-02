@@ -130,6 +130,10 @@ const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
   cors: { origin: "*" },
 });
+
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
 const PORT = 5000 
 io.on("connection", (socket) => {
   console.log("Connected");
@@ -143,6 +147,8 @@ io.on("connection", (socket) => {
   });
 });
 
+
+
 function error(err, req, res, next) {
   // log it
   if (!test) console.error(err.stack);
@@ -153,5 +159,5 @@ function error(err, req, res, next) {
 }
 app.use(error);
 server.listen(5000, () => {
-  console.log("listening on Port 3000");
+  console.log("listening on Port 5000");
 });
