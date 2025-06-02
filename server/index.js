@@ -122,19 +122,85 @@
 
 
 
+// const express = require("express");
+// const cors = require("cors");
+// const app = express();
+// app.use(cors());
+// const server = require("http").createServer(app);
+
+// const io = require("socket.io")(server, {
+//   cors: { origin: "https://fabulous-mandazi-745494.netlify.app" },
+// });
+
+
+// app.get('/ping', (req, res) => {
+//   res.send('pong');
+// });
+// const PORT = 5000 
+// io.on("connection", (socket) => {
+//   console.log("Connected");
+
+//   socket.on("message", (message) => {
+//     socket.broadcast.emit("message", message);
+//   });
+
+//   socket.on("disconnect", () => {
+//     console.log("Disconnected");
+//   });
+// });
+
+
+
+// function error(err, req, res, next) {
+//   // log it
+//   if (!test) console.error(err.stack);
+
+//   // respond with 500 "Internal Server Error".
+//   res.status(500);
+//   res.send("Internal Server Error");
+// }
+// app.use(error);
+// server.listen(5000, () => {
+//   console.log("listening on Port 5000");
+// });
+
+
+
 const express = require("express");
 const cors = require("cors");
-const app = express();
-app.use(cors());
-const server = require("http").createServer(app);
-const io = require("socket.io")(server, {
-  cors: { origin: "*" },
-});
+const http = require("http");
+const { Server } = require("socket.io");
 
+const app = express();
+
+// ✅ Allow CORS for both Express and Socket.IO
+const allowedOrigins = [
+  "https://fabulous-mandazi-745494.netlify.app", // frontend URL
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST"],
+  credentials: true,
+}));
+
+// ✅ Basic route test
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
-const PORT = 5000 
+
+const server = http.createServer(app);
+
+// ✅ Socket.IO CORS setup
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  }
+});
+
+// ✅ WebSocket logic
 io.on("connection", (socket) => {
   console.log("Connected");
 
@@ -147,17 +213,14 @@ io.on("connection", (socket) => {
   });
 });
 
-
-
+// ✅ Error handler
 function error(err, req, res, next) {
-  // log it
-  if (!test) console.error(err.stack);
-
-  // respond with 500 "Internal Server Error".
-  res.status(500);
-  res.send("Internal Server Error");
+  console.error(err.stack);
+  res.status(500).send("Internal Server Error");
 }
 app.use(error);
-server.listen(5000, () => {
-  console.log("listening on Port 5000");
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`listening on Port ${PORT}`);
 });

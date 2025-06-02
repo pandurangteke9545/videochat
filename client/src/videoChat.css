@@ -1,0 +1,186 @@
+/* Reset defaults */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #0e0e0e;
+  color: white;
+}
+
+/* Container for entire app */
+.video-chat-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Video + Chat side-by-side */
+.video-and-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* Video area */
+.video-wrapper {
+  position: relative;
+  flex: 1;
+  background-color: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.video {
+  width: 90%;
+  max-width: 600px;
+  border-radius: 12px;
+  background-color: black;
+  aspect-ratio: 16 / 9;
+}
+
+/* Chat sidebar */
+.chat-panel {
+  width: 350px;
+  max-width: 100%;
+  background-color: #1f1f1f;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-left: 2px solid #2c2c2c;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-msg {
+  padding: 8px 12px;
+  border-radius: 10px;
+  max-width: 80%;
+  word-break: break-word;
+}
+
+.chat-msg.self {
+  align-self: flex-end;
+  background-color: #4caf50;
+  color: white;
+}
+
+.chat-msg.other {
+  align-self: flex-start;
+  background-color: #2a2a2a;
+  color: white;
+}
+
+.chat-input {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #333;
+  border: none;
+  color: white;
+  outline: none;
+}
+
+.chat-input button {
+  background-color: #4caf50;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Controls at the bottom */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  background-color: #181818;
+  border-top: 2px solid #2c2c2c;
+}
+
+.control-btn {
+  background-color: #282828;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s;
+}
+
+.control-btn:hover {
+  background-color: #3c3c3c;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .video-and-chat {
+    flex-direction: column;
+  }
+
+  .chat-panel {
+    width: 100%;
+    height: 300px;
+    border-left: none;
+    border-top: 2px solid #2c2c2c;
+  }
+
+  .video-wrapper {
+    padding: 10px 0;
+  }
+
+  .video {
+    width: 95%;
+  }
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+/* Local (pip-style) video */
+.local-video {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 200px;
+  height: 120px;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  background-color: black;
+  object-fit: cover;
+}

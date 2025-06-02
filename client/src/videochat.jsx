@@ -1,279 +1,195 @@
-// import React, { useEffect, useRef, useState } from 'react';
-// import socket from './socket';
+// import { useRef, useEffect, useState } from "react";
+// import {
+//   FiVideo,
+//   FiVideoOff,
+//   FiMic,
+//   FiMicOff,
+//   FiRefreshCcw,
+// } from "react-icons/fi";
+// import "./VideoChat.css";
+// import socket from "./socket";
 
-// const VideoChat = () => {
-//   const localVideoRef = useRef(null);
-//   const remoteVideoRef = useRef(null);
-//   const peerConnectionRef = useRef(null);
-//   const localStreamRef = useRef(null);
-//   const [serverStatus, setServerStatus] = useState('Checking...');
+// const configuration = {
+//   iceServers: [
+//     { urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
+//   ],
+//   iceCandidatePoolSize: 10,
+// };
 
-//   const ICE_SERVERS = {
-//     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+// let pc;
+// let localStream;
+
+// socket.on("message", (e) => {
+//   if (!localStream) return;
+//   switch (e.type) {
+//     case "offer": handleOffer(e); break;
+//     case "answer": handleAnswer(e); break;
+//     case "candidate": handleCandidate(e); break;
+//     case "ready": if (!pc) makeCall(); break;
+//     case "bye": if (pc) hangup(); break;
+//   }
+// });
+
+// async function makeCall() {
+//   pc = new RTCPeerConnection(configuration);
+//   pc.onicecandidate = (e) => {
+//     socket.emit("message", {
+//       type: "candidate",
+//       candidate: e.candidate?.candidate,
+//       sdpMid: e.candidate?.sdpMid,
+//       sdpMLineIndex: e.candidate?.sdpMLineIndex,
+//     });
 //   };
+//   pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
+//   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+//   const offer = await pc.createOffer();
+//   await pc.setLocalDescription(offer);
+//   socket.emit("message", { type: "offer", sdp: offer.sdp });
+// }
+
+// async function handleOffer(offer) {
+//   if (pc) return;
+//   pc = new RTCPeerConnection(configuration);
+//   pc.onicecandidate = (e) => {
+//     socket.emit("message", {
+//       type: "candidate",
+//       candidate: e.candidate?.candidate,
+//       sdpMid: e.candidate?.sdpMid,
+//       sdpMLineIndex: e.candidate?.sdpMLineIndex,
+//     });
+//   };
+//   pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
+//   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+//   await pc.setRemoteDescription(offer);
+//   const answer = await pc.createAnswer();
+//   await pc.setLocalDescription(answer);
+//   socket.emit("message", { type: "answer", sdp: answer.sdp });
+// }
+
+// async function handleAnswer(answer) {
+//   if (!pc) return;
+//   await pc.setRemoteDescription(answer);
+// }
+
+// async function handleCandidate(candidate) {
+//   if (!pc) return;
+//   await pc.addIceCandidate(candidate || null);
+// }
+
+// async function hangup() {
+//   if (pc) {
+//     pc.close();
+//     pc = null;
+//   }
+//   localStream?.getTracks().forEach((track) => track.stop());
+//   localStream = null;
+//   startButton.current.disabled = false;
+//   hangupButton.current.disabled = true;
+//   muteAudButton.current.disabled = true;
+// }
+
+// let remoteVideo;
+// let localVideo;
+// let startButton;
+// let hangupButton;
+// let muteAudButton;
+
+// function VideoChat() {
+//   startButton = useRef(null);
+//   hangupButton = useRef(null);
+//   muteAudButton = useRef(null);
+//   localVideo = useRef(null);
+//   remoteVideo = useRef(null);
+//   const [audiostate, setAudio] = useState(false);
 
 //   useEffect(() => {
-//     let peerId = null;
-
-//     // Backend check
-//     fetch('http://192.168.43.76:5000/ping')
-//       .then(res => res.text())
-//       .then(data => {
-//         console.log('Ping response:', data);
-//         if (data === 'pong') {
-//           setServerStatus('Connected to backend ✅');
-//         } else {
-//           setServerStatus('Backend response invalid ❌');
-//         }
-//       })
-//       .catch(err => {
-//         console.error('Backend not reachable:', err);
-//         setServerStatus('Backend not reachable ❌');
-//       });
-
-//     // Media access
-//     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-//       .then((stream) => {
-//         console.log('Got local media stream');
-//         localStreamRef.current = stream;
-//         if (localVideoRef.current) {
-//           localVideoRef.current.srcObject = stream;
-//         }
-//         socket.emit('join');
-//         console.log('Sent join to backend');
-//       })
-//       .catch((err) => {
-//         console.error('Error accessing media devices:', err);
-//       });
-
-//     // Room joined
-//     socket.off('room-joined').on('room-joined', async ({ peerId: remotePeerId, createOffer }) => {
-//       console.log('Joined room with peer:', remotePeerId, 'Create offer:', createOffer);
-//       peerId = remotePeerId;
-
-//       if (!localStreamRef.current) {
-//         console.warn('Local stream not available yet');
-//         return;
-//       }
-
-//       // Create RTCPeerConnection
-//       peerConnectionRef.current = new RTCPeerConnection(ICE_SERVERS);
-//       const pc = peerConnectionRef.current;
-
-//       localStreamRef.current.getTracks().forEach(track => {
-//         pc.addTrack(track, localStreamRef.current);
-//       });
-
-//       pc.ontrack = (event) => {
-//         console.log('Received remote stream');
-//         if (remoteVideoRef.current) {
-//           remoteVideoRef.current.srcObject = event.streams[0];
-//         }
-//       };
-
-//       pc.onicecandidate = (event) => {
-//         if (event.candidate) {
-//           console.log('Sending ICE candidate to:', peerId);
-//           socket.emit('signal', {
-//             to: peerId,
-//             data: { candidate: event.candidate }
-//           });
-//         }
-//       };
-
-//       if (createOffer) {
-//         console.log('Creating offer...');
-//         const offer = await pc.createOffer();
-//         await pc.setLocalDescription(offer);
-//         socket.emit('signal', {
-//           to: peerId,
-//           data: { sdp: offer }
-//         });
-//         console.log('Sent offer');
-//       }
-//     });
-
-//     // Signal received
-//     socket.off('signal').on('signal', async ({ from, data }) => {
-//       console.log('Received signal from:', from, data);
-//       const pc = peerConnectionRef.current;
-//       if (!pc) {
-//         console.warn('Peer connection not initialized');
-//         return;
-//       }
-
-//       if (data.sdp) {
-//         console.log('Received SDP:', data.sdp.type);
-//         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-//         if (data.sdp.type === 'offer') {
-//           const answer = await pc.createAnswer();
-//           await pc.setLocalDescription(answer);
-//           socket.emit('signal', {
-//             to: from,
-//             data: { sdp: answer }
-//           });
-//           console.log('Sent answer');
-//         }
-//       }
-
-//       if (data.candidate) {
-//         try {
-//           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-//           console.log('Added ICE candidate');
-//         } catch (err) {
-//           console.error('Error adding ICE candidate:', err);
-//         }
-//       }
-//     });
-
-//     // Peer disconnected
-//     socket.off('peer-disconnected').on('peer-disconnected', () => {
-//       console.log('Peer disconnected');
-//       if (remoteVideoRef.current) {
-//         remoteVideoRef.current.srcObject = null;
-//       }
-//       if (peerConnectionRef.current) {
-//         peerConnectionRef.current.close();
-//         peerConnectionRef.current = null;
-//       }
-//     });
-
-//     return () => {
-//       if (peerConnectionRef.current) peerConnectionRef.current.close();
-//       if (localStreamRef.current) {
-//         localStreamRef.current.getTracks().forEach(track => track.stop());
-//       }
-//       socket.disconnect();
-//     };
+//     hangupButton.current.disabled = true;
+//     muteAudButton.current.disabled = true;
 //   }, []);
 
+//   const startB = async () => {
+//     localStream = await navigator.mediaDevices.getUserMedia({
+//       video: true,
+//       audio: { echoCancellation: true },
+//     });
+//     localVideo.current.srcObject = localStream;
+//     startButton.current.disabled = true;
+//     hangupButton.current.disabled = false;
+//     muteAudButton.current.disabled = false;
+//     socket.emit("message", { type: "ready" });
+//   };
+
+//   const hangB = async () => {
+//     hangup();
+//     socket.emit("message", { type: "bye" });
+//   };
+
+//   const muteAudio = () => {
+//     setAudio((prev) => {
+//       const newState = !prev;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newState;
+//       });
+//       return newState;
+//     });
+//   };
+
 //   return (
-//     <div className="video-container">
-//       <p style={{ color: 'green', fontWeight: 'bold' }}>{serverStatus}</p>
-//       <video ref={localVideoRef} autoPlay muted className="local-video" />
-//       <video ref={remoteVideoRef} autoPlay className="remote-video" />
+//     <div className="video-chat-container">
+//       <div className="video-wrapper">
+//         <video ref={localVideo} autoPlay muted playsInline className="video" />
+//         <video ref={remoteVideo} autoPlay playsInline className="video" />
+//       </div>
+
 //       <div className="controls">
-//         <button onClick={() => {
-//           const audioTrack = localStreamRef.current?.getAudioTracks()[0];
-//           if (audioTrack) audioTrack.enabled = !audioTrack.enabled;
-//         }}>
-//           Mute / Unmute
+//         <button ref={startButton} onClick={startB} className="control-btn">
+//           <FiVideo /> Start
 //         </button>
-//         <button onClick={() => {
-//           const videoTrack = localStreamRef.current?.getVideoTracks()[0];
-//           if (videoTrack) videoTrack.enabled = !videoTrack.enabled;
-//         }}>
-//           Camera On/Off
+//         <button ref={hangupButton} onClick={hangB} className="control-btn">
+//           <FiVideoOff /> End
 //         </button>
-//         <button>Next</button>
-//         <button>End Chat</button>
+//         <button ref={muteAudButton} onClick={muteAudio} className="control-btn">
+//           {audiostate ? <><FiMicOff /> Unmute</> : <><FiMic /> Mute</>}
+//         </button>
+//         <button onClick={() => window.location.reload()} className="control-btn">
+//           <FiRefreshCcw /> Next
+//         </button>
 //       </div>
 //     </div>
 //   );
-// };
+// }
 
 // export default VideoChat;
 
 
 
-
-
-// import { sockent } from "socket.io-client";
 import { useRef, useEffect, useState } from "react";
-import { FiVideo, FiVideoOff, FiMic, FiMicOff } from "react-icons/fi";
-import "../src/app.css"; // Import external CSS for cleaner styling
+import {
+  FiVideo,
+  FiVideoOff,
+  FiMic,
+  FiMicOff,
+  FiRefreshCcw,
+  FiSend,
+} from "react-icons/fi";
+import "./VideoChat.css";
 import socket from "./socket";
 
 const configuration = {
   iceServers: [
-    {
-      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
-    },
+    { urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
   ],
   iceCandidatePoolSize: 10,
 };
 
-
 let pc;
 let localStream;
+
+let remoteVideo;
+let localVideo;
 let startButton;
 let hangupButton;
 let muteAudButton;
-let remoteVideo;
-let localVideo;
-
-socket.on("message", (e) => {
-  if (!localStream) return;
-
-  switch (e.type) {
-    case "offer": handleOffer(e); break;
-    case "answer": handleAnswer(e); break;
-    case "candidate": handleCandidate(e); break;
-    case "ready": if (!pc) makeCall(); break;
-    case "bye": if (pc) hangup(); break;
-    default: break;
-  }
-});
-
-async function makeCall() {
-  pc = new RTCPeerConnection(configuration);
-  pc.onicecandidate = (e) => {
-    const message = {
-      type: "candidate",
-      candidate: e.candidate ? e.candidate.candidate : null,
-      sdpMid: e.candidate?.sdpMid,
-      sdpMLineIndex: e.candidate?.sdpMLineIndex,
-    };
-    socket.emit("message", message);
-  };
-  pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  socket.emit("message", { type: "offer", sdp: offer.sdp });
-}
-
-async function handleOffer(offer) {
-  if (pc) return;
-  pc = new RTCPeerConnection(configuration);
-  pc.onicecandidate = (e) => {
-    const message = {
-      type: "candidate",
-      candidate: e.candidate ? e.candidate.candidate : null,
-      sdpMid: e.candidate?.sdpMid,
-      sdpMLineIndex: e.candidate?.sdpMLineIndex,
-    };
-    socket.emit("message", message);
-  };
-  pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-  await pc.setRemoteDescription(offer);
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  socket.emit("message", { type: "answer", sdp: answer.sdp });
-}
-
-async function handleAnswer(answer) {
-  if (!pc) return;
-  await pc.setRemoteDescription(answer);
-}
-
-async function handleCandidate(candidate) {
-  if (!pc) return;
-  await pc.addIceCandidate(candidate || null);
-}
-
-async function hangup() {
-  if (pc) {
-    pc.close();
-    pc = null;
-  }
-  localStream?.getTracks().forEach((track) => track.stop());
-  localStream = null;
-  startButton.current.disabled = false;
-  hangupButton.current.disabled = true;
-  muteAudButton.current.disabled = true;
-}
 
 function VideoChat() {
   startButton = useRef(null);
@@ -282,11 +198,92 @@ function VideoChat() {
   localVideo = useRef(null);
   remoteVideo = useRef(null);
   const [audiostate, setAudio] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [msg, setMsg] = useState("");
+  const chatRef = useRef();
 
   useEffect(() => {
     hangupButton.current.disabled = true;
     muteAudButton.current.disabled = true;
+
+    socket.on("message", async (e) => {
+      if (!localStream && e.type !== "chat") return;
+      switch (e.type) {
+        case "offer": await handleOffer(e); break;
+        case "answer": await handleAnswer(e); break;
+        case "candidate": await handleCandidate(e); break;
+        case "ready": if (!pc) makeCall(); break;
+        case "bye": if (pc) hangup(); break;
+        case "chat":
+          setMessages((prev) => [...prev, { text: e.text, self: false }]);
+          break;
+      }
+    });
+
+    return () => socket.off("message");
   }, []);
+
+  useEffect(() => {
+    chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  async function makeCall() {
+    pc = new RTCPeerConnection(configuration);
+    pc.onicecandidate = (e) => {
+      socket.emit("message", {
+        type: "candidate",
+        candidate: e.candidate?.candidate,
+        sdpMid: e.candidate?.sdpMid,
+        sdpMLineIndex: e.candidate?.sdpMLineIndex,
+      });
+    };
+    pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit("message", { type: "offer", sdp: offer.sdp });
+  }
+
+  async function handleOffer(offer) {
+    if (pc) return;
+    pc = new RTCPeerConnection(configuration);
+    pc.onicecandidate = (e) => {
+      socket.emit("message", {
+        type: "candidate",
+        candidate: e.candidate?.candidate,
+        sdpMid: e.candidate?.sdpMid,
+        sdpMLineIndex: e.candidate?.sdpMLineIndex,
+      });
+    };
+    pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+    await pc.setRemoteDescription(offer);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    socket.emit("message", { type: "answer", sdp: answer.sdp });
+  }
+
+  async function handleAnswer(answer) {
+    if (!pc) return;
+    await pc.setRemoteDescription(answer);
+  }
+
+  async function handleCandidate(candidate) {
+    if (!pc) return;
+    await pc.addIceCandidate(candidate || null);
+  }
+
+  async function hangup() {
+    if (pc) {
+      pc.close();
+      pc = null;
+    }
+    localStream?.getTracks().forEach((track) => track.stop());
+    localStream = null;
+    startButton.current.disabled = false;
+    hangupButton.current.disabled = true;
+    muteAudButton.current.disabled = true;
+  }
 
   const startB = async () => {
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -306,27 +303,62 @@ function VideoChat() {
   };
 
   const muteAudio = () => {
-    localStream.getAudioTracks().forEach((track) => {
-      track.enabled = !audiostate;
+    setAudio((prev) => {
+      const newState = !prev;
+      localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !newState;
+      });
+      return newState;
     });
-    setAudio(!audiostate);
+  };
+
+  const sendMsg = () => {
+    if (!msg.trim()) return;
+    setMessages((prev) => [...prev, { text: msg, self: true }]);
+    socket.emit("message", { type: "chat", text: msg });
+    setMsg("");
   };
 
   return (
-    <div className="chat-container">
-      <div className="videos">
-        <video ref={localVideo} autoPlay muted playsInline className="video-box" />
-        <video ref={remoteVideo} autoPlay playsInline className="video-box" />
+    <div className="video-chat-container">
+      <div className="video-and-chat">
+       <div className="video-wrapper">
+          <video ref={remoteVideo} autoPlay playsInline className="remote-video" />
+          <video ref={localVideo} autoPlay muted playsInline className="local-video" />
       </div>
+
+        <div className="chat-panel">
+          <div className="chat-messages" ref={chatRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-msg ${m.self ? "self" : "other"}`}>
+                {m.text}
+              </div>
+            ))}
+          </div>
+          <div className="chat-input">
+            <input
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              placeholder="Type message..."
+              onKeyDown={(e) => e.key === "Enter" && sendMsg()}
+            />
+            <button onClick={sendMsg}><FiSend /></button>
+          </div>
+        </div>
+      </div>
+
       <div className="controls">
         <button ref={startButton} onClick={startB} className="control-btn">
-          <FiVideo />
+          <FiVideo /> Start
         </button>
         <button ref={hangupButton} onClick={hangB} className="control-btn">
-          <FiVideoOff />
+          <FiVideoOff /> End
         </button>
         <button ref={muteAudButton} onClick={muteAudio} className="control-btn">
-          {audiostate ? <FiMicOff /> : <FiMic />}
+          {audiostate ? <><FiMicOff /> Unmute</> : <><FiMic /> Mute</>}
+        </button>
+        <button onClick={() => window.location.reload()} className="control-btn">
+          <FiRefreshCcw /> Next
         </button>
       </div>
     </div>
@@ -334,3 +366,166 @@ function VideoChat() {
 }
 
 export default VideoChat;
+
+
+
+
+// import { useRef, useEffect, useState } from "react";
+// import { FiVideo, FiVideoOff, FiMic, FiMicOff, FiRefreshCcw } from "react-icons/fi";
+// import "./app.css"; // Ensure your CSS is updated
+// import socket from "./socket";
+
+// const configuration = {
+//   iceServers: [
+//     {
+//       urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
+//     },
+//   ],
+//   iceCandidatePoolSize: 10,
+// };
+
+// let pc;
+// let localStream;
+// let startButton;
+// let hangupButton;
+// let muteAudButton;
+// let remoteVideo;
+// let localVideo;
+
+// socket.on("message", (e) => {
+//   if (!localStream) return;
+
+//   switch (e.type) {
+//     case "offer": handleOffer(e); break;
+//     case "answer": handleAnswer(e); break;
+//     case "candidate": handleCandidate(e); break;
+//     case "ready": if (!pc) makeCall(); break;
+//     case "bye": if (pc) hangup(); break;
+//     default: break;
+//   }
+// });
+
+// async function makeCall() {
+//   pc = new RTCPeerConnection(configuration);
+//   pc.onicecandidate = (e) => {
+//     socket.emit("message", {
+//       type: "candidate",
+//       candidate: e.candidate?.candidate || null,
+//       sdpMid: e.candidate?.sdpMid,
+//       sdpMLineIndex: e.candidate?.sdpMLineIndex,
+//     });
+//   };
+//   pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
+//   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+//   const offer = await pc.createOffer();
+//   await pc.setLocalDescription(offer);
+//   socket.emit("message", { type: "offer", sdp: offer.sdp });
+// }
+
+// async function handleOffer(offer) {
+//   if (pc) return;
+//   pc = new RTCPeerConnection(configuration);
+//   pc.onicecandidate = (e) => {
+//     socket.emit("message", {
+//       type: "candidate",
+//       candidate: e.candidate?.candidate || null,
+//       sdpMid: e.candidate?.sdpMid,
+//       sdpMLineIndex: e.candidate?.sdpMLineIndex,
+//     });
+//   };
+//   pc.ontrack = (e) => (remoteVideo.current.srcObject = e.streams[0]);
+//   localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+//   await pc.setRemoteDescription(offer);
+//   const answer = await pc.createAnswer();
+//   await pc.setLocalDescription(answer);
+//   socket.emit("message", { type: "answer", sdp: answer.sdp });
+// }
+
+// async function handleAnswer(answer) {
+//   if (!pc) return;
+//   await pc.setRemoteDescription(answer);
+// }
+
+// async function handleCandidate(candidate) {
+//   if (!pc) return;
+//   await pc.addIceCandidate(candidate || null);
+// }
+
+// async function hangup() {
+//   if (pc) {
+//     pc.close();
+//     pc = null;
+//   }
+//   localStream?.getTracks().forEach((track) => track.stop());
+//   localStream = null;
+//   startButton.current.disabled = false;
+//   hangupButton.current.disabled = true;
+//   muteAudButton.current.disabled = true;
+// }
+
+// function VideoChat() {
+//   startButton = useRef(null);
+//   hangupButton = useRef(null);
+//   muteAudButton = useRef(null);
+//   localVideo = useRef(null);
+//   remoteVideo = useRef(null);
+//   const [audiostate, setAudio] = useState(false);
+
+//   useEffect(() => {
+//     hangupButton.current.disabled = true;
+//     muteAudButton.current.disabled = true;
+//   }, []);
+
+//   const startB = async () => {
+//     localStream = await navigator.mediaDevices.getUserMedia({
+//       video: true,
+//       audio: { echoCancellation: true },
+//     });
+//     localVideo.current.srcObject = localStream;
+//     startButton.current.disabled = true;
+//     hangupButton.current.disabled = false;
+//     muteAudButton.current.disabled = false;
+//     socket.emit("message", { type: "ready" });
+//   };
+
+//   const hangB = async () => {
+//     hangup();
+//     socket.emit("message", { type: "bye" });
+//   };
+
+//   const muteAudio = () => {
+//     setAudio((prev) => {
+//       const newState = !prev;
+//       localStream.getAudioTracks().forEach((track) => {
+//         track.enabled = !newState;
+//       });
+//       return newState;
+//     });
+//   };
+
+//   return (
+//     <div className="chat-container">
+//       <div className="videos">
+//         <video ref={localVideo} autoPlay muted playsInline className="video-box" />
+//         <video ref={remoteVideo} autoPlay playsInline className="video-box" />
+//       </div>
+//       <div className="controls">
+//         <button ref={startButton} onClick={startB} className="control-btn">
+//           <FiVideo /> Start
+//         </button>
+//         <button ref={hangupButton} onClick={hangB} className="control-btn">
+//           <FiVideoOff /> End
+//         </button>
+//         <button ref={muteAudButton} onClick={muteAudio} className="control-btn">
+//           {audiostate ? <><FiMicOff /> Unmute</> : <><FiMic /> Mute</>}
+//         </button>
+//         <button onClick={() => window.location.reload()} className="control-btn">
+//           <FiRefreshCcw /> Next
+//         </button>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default VideoChat;
+
