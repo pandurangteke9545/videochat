@@ -79,7 +79,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST'],
   },
 });
@@ -116,6 +116,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = 5000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
+server.listen(PORT, '192.168.43.76', () => {
+  console.log(`Server running at http://192.168.43.76:${PORT}`);
 });
