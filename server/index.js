@@ -66,56 +66,92 @@
 
 
 // /server/index.js
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
+// const express = require('express');
+// const http = require('http');
+// const { Server } = require('socket.io');
+// const cors = require('cors');
 
+// const app = express();
+// app.use(cors());
+// app.use(express.json());
+
+// const server = http.createServer(app);
+
+// const io = new Server(server, {
+//   cors: {
+//     origin: 'http://localhost:5173',
+//     methods: ['GET', 'POST'],
+//   },
+// });
+
+// // Simple API check
+// app.get('/ping', (req, res) => {
+//   res.send('pong');
+// });
+
+// // Handle socket connections
+// io.on('connection', (socket) => {
+//   console.log('User connected:', socket.id);
+
+//   socket.on('join', () => {
+//     console.log('Join from:', socket.id);
+//     socket.broadcast.emit('room-joined', {
+//       peerId: socket.id,
+//       createOffer: true,
+//     });
+//   });
+
+//   socket.on('signal', ({ to, data }) => {
+//     console.log(`Signal from ${socket.id} to ${to}`);
+//     io.to(to).emit('signal', {
+//       from: socket.id,
+//       data,
+//     });
+//   });
+
+//   socket.on('disconnect', () => {
+//     console.log('User disconnected:', socket.id);
+//     socket.broadcast.emit('peer-disconnected', socket.id);
+//   });
+// });
+
+// const PORT = 5000;
+// server.listen(PORT, '192.168.43.76', () => {
+//   console.log(`Server running at http://192.168.43.76:${PORT}`);
+// });
+
+
+
+const express = require("express");
+const cors = require("cors");
 const app = express();
 app.use(cors());
-app.use(express.json());
-
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-  },
+const server = require("http").createServer(app);
+const io = require("socket.io")(server, {
+  cors: { origin: "*" },
 });
+const PORT = 5000 
+io.on("connection", (socket) => {
+  console.log("Connected");
 
-// Simple API check
-app.get('/ping', (req, res) => {
-  res.send('pong');
-});
-
-// Handle socket connections
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('join', () => {
-    console.log('Join from:', socket.id);
-    socket.broadcast.emit('room-joined', {
-      peerId: socket.id,
-      createOffer: true,
-    });
+  socket.on("message", (message) => {
+    socket.broadcast.emit("message", message);
   });
 
-  socket.on('signal', ({ to, data }) => {
-    console.log(`Signal from ${socket.id} to ${to}`);
-    io.to(to).emit('signal', {
-      from: socket.id,
-      data,
-    });
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    socket.broadcast.emit('peer-disconnected', socket.id);
+  socket.on("disconnect", () => {
+    console.log("Disconnected");
   });
 });
 
-const PORT = 5000;
-server.listen(PORT, '192.168.43.76', () => {
-  console.log(`Server running at http://192.168.43.76:${PORT}`);
+function error(err, req, res, next) {
+  // log it
+  if (!test) console.error(err.stack);
+
+  // respond with 500 "Internal Server Error".
+  res.status(500);
+  res.send("Internal Server Error");
+}
+app.use(error);
+server.listen(5000, () => {
+  console.log("listening on Port 3000");
 });
