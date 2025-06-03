@@ -122,47 +122,79 @@
 
 
 
+
+
 // const express = require("express");
 // const cors = require("cors");
+// const http = require("http");
+// const { Server } = require("socket.io");
+
 // const app = express();
-// app.use(cors());
-// const server = require("http").createServer(app);
+// const allowedOrigins = ["https://fabulous-mandazi-745494.netlify.app"];
 
-// const io = require("socket.io")(server, {
-//   cors: { origin: "https://fabulous-mandazi-745494.netlify.app" },
+// app.use(cors({
+//   origin: allowedOrigins,
+//   methods: ["GET", "POST"],
+//   credentials: true,
+// }));
+
+// const server = http.createServer(app);
+// const io = new Server(server, {
+//   cors: {
+//     origin: allowedOrigins,
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
 // });
 
+// let waitingSocket = null; // store socket waiting for pair
 
-// app.get('/ping', (req, res) => {
-//   res.send('pong');
-// });
-// const PORT = 5000 
 // io.on("connection", (socket) => {
-//   console.log("Connected");
+//   console.log("New user connected:", socket.id);
 
-//   socket.on("message", (message) => {
-//     socket.broadcast.emit("message", message);
+//   if (waitingSocket) {
+//     // Pair current socket with waiting socket
+//     const roomId = `room-${waitingSocket.id}-${socket.id}`;
+//     socket.join(roomId);
+//     waitingSocket.join(roomId);
+
+//     // Notify both clients that they're paired
+//     socket.emit("message", { type: "ready", roomId });
+//     waitingSocket.emit("message", { type: "ready", roomId });
+
+//     console.log(`Paired ${waitingSocket.id} and ${socket.id} in ${roomId}`);
+//     waitingSocket = null;
+//   } else {
+//     // No one is waiting, so set current user as waiting
+//     waitingSocket = socket;
+//     console.log(`Waiting for a pair... (${socket.id})`);
+//   }
+
+//   socket.on("message", ({ roomId, ...rest }) => {
+//     socket.to(roomId).emit("message", rest);
+//   });
+
+//   socket.on("disconnecting", () => {
+//     if (waitingSocket?.id === socket.id) {
+//       waitingSocket = null;
+//     }
+
+//     for (const roomId of socket.rooms) {
+//       if (roomId !== socket.id) {
+//         socket.to(roomId).emit("message", { type: "leave" });
+//         console.log(`User ${socket.id} left room ${roomId}`);
+//       }
+//     }
 //   });
 
 //   socket.on("disconnect", () => {
-//     console.log("Disconnected");
+//     console.log("User disconnected:", socket.id);
 //   });
 // });
 
+// const PORT = process.env.PORT || 5000;
+// server.listen(PORT, () => console.log(`listening on Port ${PORT}`));
 
-
-// function error(err, req, res, next) {
-//   // log it
-//   if (!test) console.error(err.stack);
-
-//   // respond with 500 "Internal Server Error".
-//   res.status(500);
-//   res.send("Internal Server Error");
-// }
-// app.use(error);
-// server.listen(5000, () => {
-//   console.log("listening on Port 5000");
-// });
 
 
 

@@ -1,7 +1,7 @@
 // socket.js
 import { io } from 'socket.io-client';
 
-const socket = io('http://192.168.0.230:5000', {
+const socket = io('http://192.168.46.76:5000', {
   transports: ['websocket'],  // Force WebSocket
   reconnection: true
 });
