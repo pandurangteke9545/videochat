@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* Reset defaults */
 * {
   margin: 0;
@@ -20,10 +22,7 @@ html, body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: auto; 
-  margin-bottom: 15vh;
 }
-
 
 /* Video + Chat side-by-side */
 .video-and-chat {
@@ -50,6 +49,27 @@ html, body {
   border-radius: 12px;
   background-color: black;
   aspect-ratio: 16 / 9;
+}
+
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+/* Local (pip-style) video */
+.local-video {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 20%;
+  height: 30%;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  background-color: black;
+  object-fit: cover;
 }
 
 /* Chat sidebar */
@@ -85,19 +105,16 @@ html, body {
   background-color: #4caf50;
   color: white;
 }
-
 .chat-msg.other {
   align-self: flex-start;
   background-color: #2a2a2a;
   color: white;
 }
-
 .chat-input {
   display: flex;
   gap: 8px;
   margin-top: auto;
 }
-
 .chat-input input {
   flex: 1;
   padding: 10px;
@@ -146,6 +163,13 @@ html, body {
   background-color: #3c3c3c;
 }
 
+/* .nametitle{
+  color:orange;
+  font-size: 10px;
+  z-index: 10;
+} */
+
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .video-and-chat {
@@ -154,7 +178,7 @@ html, body {
 
   .chat-panel {
     width: 100%;
-    height: 300px;
+    height: 200px;
     border-left: none;
     border-top: 2px solid #2c2c2c;
   }
@@ -166,7 +190,23 @@ html, body {
   .video {
     width: 95%;
   }
+
+  .controls {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px;
+  background-color: #181818;
+  border-top: 2px solid #2c2c2c;
 }
+  .control-btn{
+    padding: 6px;
+    margin-bottom: 40px;
+    font-size: 0.8rem;
+    width: 100%;
+    justify-content: center;
+}
+
 
 .remote-video {
   width: 100%;
@@ -178,67 +218,14 @@ html, body {
 /* Local (pip-style) video */
 .local-video {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 200px;
-  height: 120px;
+  bottom: 0px;
+  right: 0px;
+  width: 30%;
+  height: 45%;
   border: 2px solid #fff;
   border-radius: 10px;
   background-color: black;
-  object-fit: cover;
+  object-fit: cover;
 }
 
-@media (max-width: 768px) {
-  .video-and-chat {
-    flex-direction: column;
-    flex: 1;
-  }
-
-  .video-wrapper {
-    flex: none;
-    height: auto;
-    padding: 10px;
-  }
-
-  .chat-panel {
-    width: 100%;
-    height: 40vh;
-    max-height: 50vh;
-    padding: 10px;
-    border-left: none;
-    border-top: 2px solid #2c2c2c;
-  }
-
-  .controls {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .control-btn {
-    flex: 1 1 calc(50% - 10px);
-    justify-content: center;
-    font-size: 0.9rem;
-    padding: 10px;
-  }
-
-  .local-video {
-    width: 120px;
-    height: 80px;
-    bottom: 10px;
-    right: 10px;
-  }
-
-  .chat-input {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .chat-input input {
-    width: 100%;
-  }
-
-  .chat-input button {
-    width: 100%;
-  }
 }

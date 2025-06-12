@@ -1,7 +1,7 @@
 // socket.js
 import { io } from 'socket.io-client';
 
-const socket = io('https://aa55-2409-4042-8ec4-31f2-c59f-8de-bb94-95d7.ngrok-free.app', {
+const socket = io('https://2498-152-56-12-50.ngrok-free.app', {
   transports: ['websocket'],  // Force WebSocket
   reconnection: true
 });

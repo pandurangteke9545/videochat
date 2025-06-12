@@ -1,4 +1,6 @@
-.chat-container {
+@import "tailwindcss";
+
+/* .chat-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,4 +45,4 @@
 
 .control-btn:hover {
   background-color: #444;
-}
+} */
