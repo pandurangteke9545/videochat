@@ -153,9 +153,8 @@
 
 
 
+
 ///third time trying ///
-
-
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -166,6 +165,8 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   "https://fabulous-mandazi-745494.netlify.app",
+  "http://localhost:5173"
+
 ];
 
 app.use(cors({
@@ -199,7 +200,6 @@ function pairUsers(socket1, socket2) {
 
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
-
   socket.on("findPartner", () => {
     const index = waitingUsers.findIndex(id => id !== socket.id);
     if (index !== -1) {
@@ -255,6 +255,7 @@ io.on("connection", (socket) => {
     socket.emit("message", { type: "bye" });
   });
 });
+
 
 server.listen(process.env.PORT || 5000, () => {
   console.log(`Server listening on port 5000`);
